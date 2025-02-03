@@ -2,6 +2,10 @@
 #include <esp_matter_console.h>
 #include <esp_matter.h>
 
+#if CHIP_DEVICE_CONFIG_ENABLE_THREAD
+#include <platform/ESP32/OpenthreadLauncher.h>
+#endif
+
 #include "matter_interface.h"
 
 static auto TAG = "***matter_interface***";
@@ -182,6 +186,35 @@ esp_err_t identification_callback(esp_matter::identification::callback_type_t co
 }
 
 esp_err_t matter_init(uint16_t *endpoint_id, esp_matter::attribute::callback_t attribute_update_cb) {
+
+
+
+#if CHIP_DEVICE_CONFIG_ENABLE_THREAD
+#define ESP_OPENTHREAD_DEFAULT_RADIO_CONFIG()                                           \
+{                                                                                   \
+.radio_mode = RADIO_MODE_NATIVE,                                                \
+}
+
+#define ESP_OPENTHREAD_DEFAULT_HOST_CONFIG()                                            \
+{                                                                                   \
+.host_connection_mode = HOST_CONNECTION_MODE_NONE,                              \
+}
+
+#define ESP_OPENTHREAD_DEFAULT_PORT_CONFIG()                                            \
+{                                                                                   \
+.storage_partition_name = "nvs", .netif_queue_size = 10, .task_queue_size = 10, \
+}
+#endif
+
+#if CHIP_DEVICE_CONFIG_ENABLE_THREAD
+    /* Set OpenThread platform config */
+    esp_openthread_platform_config_t config = {
+        .radio_config = ESP_OPENTHREAD_DEFAULT_RADIO_CONFIG(),
+        .host_config = ESP_OPENTHREAD_DEFAULT_HOST_CONFIG(),
+        .port_config = ESP_OPENTHREAD_DEFAULT_PORT_CONFIG(),
+    };
+    set_openthread_platform_config(&config);
+#endif
 
     // Initialize Matter Node, where
     // - node_config is the configuration object for the nodeset_callback

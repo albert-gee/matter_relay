@@ -1,12 +1,12 @@
 #include "esp_log.h"
 #include "esp_err.h"
 #include "nvs_flash.h"
-#include <portmacro.h>
+//#include <portmacro.h>
 #include "driver/gpio.h"
 
 #include "matter_interface.h"
 
-#define RELAY_PIN GPIO_NUM_21
+#define RELAY_PIN GPIO_NUM_22
 
 static const char *TAG = "***app_main***";
 
