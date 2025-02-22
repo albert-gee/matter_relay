@@ -21,9 +21,6 @@ esp_err_t attribute_update_callback(const esp_matter::attribute::callback_type_t
             // Set the relay state based on the attribute value
             gpio_set_level(RELAY_PIN, val->val.b);
             ESP_LOGI(TAG, "Relay state set to: %d", val->val.b);
-        } else {
-            ESP_LOGE(TAG, "Invalid attribute value or type.");
-            return ESP_ERR_INVALID_ARG;
         }
 
     } else if (type == esp_matter::attribute::callback_type_t::POST_UPDATE) {
