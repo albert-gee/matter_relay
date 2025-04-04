@@ -1,4 +1,5 @@
-idf_component_register(SRCS "src/app_main.cpp" "src/matter_interface.cpp"
+idf_component_register(
+        SRC_DIRS "src"
         INCLUDE_DIRS "include"
 )
 

@@ -1,209 +1,35 @@
+#include "matter_interface.h"
+#include "events.h"
+
 #include <esp_log.h>
-#include <esp_matter_console.h>
+#include <esp_err.h>
 #include <esp_matter.h>
+#include <esp_matter_console.h>
+#include <freertos/FreeRTOS.h>
+#include <portmacro.h>
 
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD
 #include <platform/ESP32/OpenthreadLauncher.h>
 #endif
 
-#include "matter_interface.h"
+static const char *TAG = "***matter_interface***";
 
-static auto TAG = "***matter_interface***";
-
-void matter_event_callback(const ChipDeviceEvent *event, intptr_t arg) {
-    switch (event->Type) {
-        // Signals a change in connectivity of the device's Wi-Fi station interface.
-        case chip::DeviceLayer::DeviceEventType::kWiFiConnectivityChange:
-            ESP_LOGI(TAG, "Wi-Fi connectivity change");
-            break;
-
-        // Signals a change in connectivity of the device's Thread interface.
-        case chip::DeviceLayer::DeviceEventType::kThreadConnectivityChange:
-            ESP_LOGI(TAG, "Thread connectivity change");
-            break;
-
-        // Signals a change in the device's ability to communicate via the internet.
-        case chip::DeviceLayer::DeviceEventType::kInternetConnectivityChange:
-            ESP_LOGI(TAG, "Internet connectivity change");
-            break;
-
-        // Signals a change in the device's ability to communicate with a chip-enabled service.
-        case chip::DeviceLayer::DeviceEventType::kServiceConnectivityChange:
-            ESP_LOGI(TAG, "Service connectivity change");
-            break;
-
-        // Signals a change to the device's service provisioning state.
-        case chip::DeviceLayer::DeviceEventType::kServiceProvisioningChange:
-            ESP_LOGI(TAG, "Service provisioning change");
-            break;
-
-        // Signals a change to the device's real-time clock synchronization state.
-        case chip::DeviceLayer::DeviceEventType::kTimeSyncChange:
-            ESP_LOGI(TAG, "Time synchronization change");
-            break;
-
-        // Signals that an external entity has established a new CHIPoBLE connection with the device.
-        case chip::DeviceLayer::DeviceEventType::kCHIPoBLEConnectionEstablished:
-            ESP_LOGI(TAG, "BLE connection established");
-            break;
-
-        // Signals that an external entity has closed an existing CHIPoBLE connection with the device.
-        case chip::DeviceLayer::DeviceEventType::kCHIPoBLEConnectionClosed:
-            ESP_LOGI(TAG, "BLE connection closed");
-            break;
-
-        // Request to close all BLE connections when concurrent connections are not supported.
-        case chip::DeviceLayer::DeviceEventType::kCloseAllBleConnections:
-            ESP_LOGI(TAG, "Close all BLE connections requested");
-            break;
-
-        // Indicates that the Wi-Fi device is available for connection.
-        case chip::DeviceLayer::DeviceEventType::kWiFiDeviceAvailable:
-            ESP_LOGI(TAG, "Wi-Fi device is available");
-            break;
-
-        // Indicates that the operational network has started.
-        case chip::DeviceLayer::DeviceEventType::kOperationalNetworkStarted:
-            ESP_LOGI(TAG, "Operational network started");
-            break;
-
-        // Signals a state change in the Thread stack.
-        case chip::DeviceLayer::DeviceEventType::kThreadStateChange:
-            ESP_LOGI(TAG, "Thread state change");
-            break;
-
-        // Indicates a change in the state of the Thread network interface.
-        case chip::DeviceLayer::DeviceEventType::kThreadInterfaceStateChange:
-            ESP_LOGI(TAG, "Thread interface state change");
-            break;
-
-        // Indicates a change in the CHIPoBLE advertising state.
-        case chip::DeviceLayer::DeviceEventType::kCHIPoBLEAdvertisingChange:
-            ESP_LOGI(TAG, "CHIPoBLE advertising state change");
-            break;
-
-        // Indicates that an IP address (IPv4 or IPv6) has changed for the interface.
-        case chip::DeviceLayer::DeviceEventType::kInterfaceIpAddressChanged:
-            ESP_LOGI(TAG, "Interface IP address changed");
-            break;
-
-        // Signals that commissioning has completed via the general commissioning cluster command.
-        case chip::DeviceLayer::DeviceEventType::kCommissioningComplete:
-            ESP_LOGI(TAG, "Commissioning complete");
-            break;
-
-        // Indicates that the fail-safe timer expired before the CommissioningComplete command was invoked.
-        case chip::DeviceLayer::DeviceEventType::kFailSafeTimerExpired:
-            ESP_LOGI(TAG, "Commissioning failed, fail-safe timer expired");
-            break;
-
-        // Indicates that the operational network is enabled.
-        case chip::DeviceLayer::DeviceEventType::kOperationalNetworkEnabled:
-            ESP_LOGI(TAG, "Operational network enabled");
-            break;
-
-        // Signals that DNS-SD has been initialized and is ready to operate.
-        case chip::DeviceLayer::DeviceEventType::kDnssdInitialized:
-            ESP_LOGI(TAG, "DNS-SD initialized");
-            break;
-
-        // Indicates that the DNS-SD backend was restarted and services must be published again.
-        case chip::DeviceLayer::DeviceEventType::kDnssdRestartNeeded:
-            ESP_LOGI(TAG, "DNS-SD restart needed");
-            break;
-
-        // Indicates that bindings were updated via cluster.
-        case chip::DeviceLayer::DeviceEventType::kBindingsChangedViaCluster:
-            ESP_LOGI(TAG, "Bindings updated via cluster");
-            break;
-
-        // Indicates a change in the OTA engine state.
-        case chip::DeviceLayer::DeviceEventType::kOtaStateChanged:
-            ESP_LOGI(TAG, "OTA state changed");
-            break;
-
-        // Indicates that server initialization has completed, and the node is ready for connections.
-        case chip::DeviceLayer::DeviceEventType::kServerReady:
-            ESP_LOGI(TAG, "Server is ready");
-            break;
-
-        // Signals that BLE has been deinitialized.
-        case chip::DeviceLayer::DeviceEventType::kBLEDeinitialized:
-            ESP_LOGI(TAG, "BLE deinitialized");
-            break;
-
-        // Signals that a commissioning session has started.
-        case chip::DeviceLayer::DeviceEventType::kCommissioningSessionStarted:
-            ESP_LOGI(TAG, "Commissioning session started");
-            break;
-
-        // Signals that a commissioning session has stopped.
-        case chip::DeviceLayer::DeviceEventType::kCommissioningSessionStopped:
-            ESP_LOGI(TAG, "Commissioning session stopped");
-            break;
-
-        // Indicates that the commissioning window is now open.
-        case chip::DeviceLayer::DeviceEventType::kCommissioningWindowOpened:
-            ESP_LOGI(TAG, "Commissioning window opened");
-            break;
-
-        // Indicates that the commissioning window is now closed.
-        case chip::DeviceLayer::DeviceEventType::kCommissioningWindowClosed:
-            ESP_LOGI(TAG, "Commissioning window closed");
-            break;
-
-        // Indicates that a fabric is about to be removed.
-        case chip::DeviceLayer::DeviceEventType::kFabricWillBeRemoved:
-            ESP_LOGI(TAG, "Fabric will be removed");
-            break;
-
-        // Indicates that a fabric has been removed.
-        case chip::DeviceLayer::DeviceEventType::kFabricRemoved:
-            ESP_LOGI(TAG, "Fabric removed successfully");
-            break;
-
-        // Indicates that a fabric in the Fabric Table has been committed to storage.
-        case chip::DeviceLayer::DeviceEventType::kFabricCommitted:
-            ESP_LOGI(TAG, "Fabric committed to storage");
-            break;
-
-        // Signals that operational credentials have been updated.
-        case chip::DeviceLayer::DeviceEventType::kFabricUpdated:
-            ESP_LOGI(TAG, "Fabric updated");
-            break;
-
-        default:
-            ESP_LOGI(TAG, "Unhandled Matter event type: %d", event->Type);
-            break;
-    }
-}
-
-esp_err_t identification_callback(esp_matter::identification::callback_type_t const type, uint16_t const endpoint_id,
-                                  uint8_t const effect_id, uint8_t const effect_variant, void *priv_data) {
-    ESP_LOGI(TAG, "Identification Callback Invoked: type=%d, endpoint_id=%u, effect_id=%u, effect_variant=%u",
-             type, (unsigned int)endpoint_id, (unsigned int)effect_id, (unsigned int)effect_variant);
-    return ESP_OK;
-}
-
-esp_err_t matter_init(uint16_t *endpoint_id, esp_matter::attribute::callback_t attribute_update_cb) {
-
-
-
+esp_err_t matter_init(uint16_t *endpoint_id) {
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD
-#define ESP_OPENTHREAD_DEFAULT_RADIO_CONFIG()                                           \
-{                                                                                   \
-.radio_mode = RADIO_MODE_NATIVE,                                                \
-}
+    #define ESP_OPENTHREAD_DEFAULT_RADIO_CONFIG()                                           \
+    {                                                                                   \
+    .radio_mode = RADIO_MODE_NATIVE,                                                \
+    }
 
-#define ESP_OPENTHREAD_DEFAULT_HOST_CONFIG()                                            \
-{                                                                                   \
-.host_connection_mode = HOST_CONNECTION_MODE_NONE,                              \
-}
+    #define ESP_OPENTHREAD_DEFAULT_HOST_CONFIG()                                            \
+    {                                                                                   \
+    .host_connection_mode = HOST_CONNECTION_MODE_NONE,                              \
+    }
 
-#define ESP_OPENTHREAD_DEFAULT_PORT_CONFIG()                                            \
-{                                                                                   \
-.storage_partition_name = "nvs", .netif_queue_size = 10, .task_queue_size = 10, \
-}
+    #define ESP_OPENTHREAD_DEFAULT_PORT_CONFIG()                                            \
+    {                                                                                   \
+    .storage_partition_name = "nvs", .netif_queue_size = 10, .task_queue_size = 10, \
+    }
 #endif
 
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD
@@ -222,7 +48,7 @@ esp_err_t matter_init(uint16_t *endpoint_id, esp_matter::attribute::callback_t a
     // - identification_callback is the callback for handling identification queries
     esp_matter::node::config_t node_config;
     esp_matter::node_t *matter_node = esp_matter::node::create(
-        &node_config, attribute_update_cb, identification_callback);
+        &node_config, matter_attribute_update_callback, identification_callback);
     if (matter_node == nullptr) {
         ESP_LOGE(TAG, "Failed to create Matter node.");
         return ESP_FAIL;
@@ -274,7 +100,6 @@ esp_err_t matter_init(uint16_t *endpoint_id, esp_matter::attribute::callback_t a
 }
 
 esp_err_t matter_update_value(const uint16_t endpoint_id, const bool new_value) {
-
     esp_matter_attr_val_t matter_new_val = esp_matter_bool(new_value);
     const esp_err_t ret = esp_matter::attribute::update(
         endpoint_id,
@@ -292,7 +117,6 @@ esp_err_t matter_update_value(const uint16_t endpoint_id, const bool new_value) 
 }
 
 esp_err_t create_on_off_endpoint(esp_matter::node_t *matter_node, uint16_t *endpoint_id) {
-
     esp_matter::endpoint::on_off_light::config_t on_off_light_config;
     esp_matter::endpoint_t *endpoint = esp_matter::endpoint::on_off_light::create(
         matter_node,
