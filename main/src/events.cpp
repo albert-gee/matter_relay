@@ -1,4 +1,5 @@
 #include "events.h"
+#include "matter_interface.h"
 #include "relay.h"
 
 #include <esp_matter.h>
@@ -185,26 +186,28 @@ void matter_event_callback(const ChipDeviceEvent *event, intptr_t arg) {
 
 esp_err_t matter_attribute_update_callback(esp_matter::attribute::callback_type_t type, uint16_t endpoint_id, uint32_t cluster_id, uint32_t attribute_id,
                                            esp_matter_attr_val_t *val, void *priv_data) {
-    if (type == esp_matter::attribute::callback_type_t::PRE_UPDATE) {
-        if (val) {
-            switch (val->type) {
-                case ESP_MATTER_VAL_TYPE_BOOLEAN:
-                    // Set the relay state based on the attribute value
-                    relay_set(val->val.b);
-                    ESP_LOGI(TAG, "Relay state set to: %d", val->val.b);
-                    break;
-
-                default:
-                    ESP_LOGI(TAG, "Unknown attribute type: %d", val->type);
-                    break;
-            }
+    if (type != esp_matter::attribute::callback_type_t::PRE_UPDATE) {
+        if (type == esp_matter::attribute::callback_type_t::POST_UPDATE) {
+            ESP_LOGI(TAG, "POST_UPDATE triggered for endpoint %" PRIu32 ", cluster %" PRIu32 ", attribute %" PRIu32 ".",
+                     (uint32_t)endpoint_id, (uint32_t)cluster_id, (uint32_t)attribute_id);
         }
-    } else if (type == esp_matter::attribute::callback_type_t::POST_UPDATE) {
-        ESP_LOGI(TAG, "POST_UPDATE triggered for endpoint %" PRIu32 ", cluster %" PRIu32 ", attribute %" PRIu32 ".",
-                 (uint32_t)endpoint_id, (uint32_t)cluster_id, (uint32_t)attribute_id);
+        return ESP_OK;
     }
 
-    return ESP_OK;
+    if (endpoint_id != matter_get_relay_endpoint_id()) {
+        return ESP_OK;
+    }
+
+    if (cluster_id != chip::app::Clusters::OnOff::Id ||
+        attribute_id != chip::app::Clusters::OnOff::Attributes::OnOff::Id) {
+        return ESP_OK;
+    }
+
+    if (val == nullptr || val->type != ESP_MATTER_VAL_TYPE_BOOLEAN) {
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    return relay_set(val->val.b);
 }
 
 esp_err_t identification_callback(esp_matter::identification::callback_type_t const type, uint16_t const endpoint_id,

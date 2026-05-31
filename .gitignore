@@ -1,5 +1,6 @@
 /build/
 /cmake-build-debug-esp-idf/
 /managed_components/
+.idea/
 sdkconfig
 sdkconfig.old

@@ -1,5 +1,6 @@
 #include "matter_interface.h"
 #include "events.h"
+#include "relay.h"
 
 #include <esp_log.h>
 #include <esp_err.h>
@@ -13,6 +14,7 @@
 #endif
 
 static const char *TAG = "***matter_interface***";
+static uint16_t relay_endpoint_id = 0;
 
 esp_err_t matter_init(uint16_t *endpoint_id) {
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD
@@ -118,6 +120,8 @@ esp_err_t matter_update_value(const uint16_t endpoint_id, const bool new_value) 
 
 esp_err_t create_on_off_endpoint(esp_matter::node_t *matter_node, uint16_t *endpoint_id) {
     esp_matter::endpoint::on_off_light::config_t on_off_light_config;
+    on_off_light_config.on_off.on_off = relay_get();
+
     esp_matter::endpoint_t *endpoint = esp_matter::endpoint::on_off_light::create(
         matter_node,
         &on_off_light_config,
@@ -130,8 +134,13 @@ esp_err_t create_on_off_endpoint(esp_matter::node_t *matter_node, uint16_t *endp
         return ESP_FAIL;
     }
 
-    *endpoint_id = esp_matter::endpoint::get_id(endpoint);
-    ESP_LOGI(TAG, "Relay created with endpoint_id %d", *endpoint_id);
+    relay_endpoint_id = esp_matter::endpoint::get_id(endpoint);
+    *endpoint_id = relay_endpoint_id;
+    ESP_LOGI(TAG, "Relay created with endpoint_id %d", relay_endpoint_id);
 
     return ESP_OK;
+}
+
+uint16_t matter_get_relay_endpoint_id(void) {
+    return relay_endpoint_id;
 }

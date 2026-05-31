@@ -52,6 +52,8 @@ esp_err_t matter_update_value(uint16_t endpoint_id, bool new_value);
  */
 esp_err_t create_on_off_endpoint(esp_matter::node_t *matter_node, uint16_t *endpoint_id);
 
+uint16_t matter_get_relay_endpoint_id(void);
+
 #ifdef __cplusplus
 }
 #endif

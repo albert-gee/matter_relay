@@ -20,8 +20,12 @@ extern "C" void app_main() {
     }
     ESP_LOGI(TAG, "NVS initialized.");
 
-    // Initialize GPIO
-    init_relay();
+    // Initialize relay GPIO
+    err = relay_init();
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Relay initialization failed: %s", esp_err_to_name(err));
+        return;
+    }
 
     // Initialize Matter
     ESP_LOGI(TAG, "Initializing Matter interface...");
@@ -33,4 +37,9 @@ extern "C" void app_main() {
     }
     ESP_LOGI(TAG, "Matter initialized.");
 
+    err = matter_update_value(ep_id, relay_get());
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to synchronize Matter OnOff state: %s", esp_err_to_name(err));
+        return;
+    }
 }

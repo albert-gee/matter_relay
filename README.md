@@ -1,6 +1,16 @@
-# Matter-based ESP32 Relay Controller
+# Matter Relay Actuator
 
-This firmware is for an ESP32 device that uses the Matter standard to control a relay through an On/Off endpoint.
+This firmware is a Matter relay actuator. It creates one Matter On/Off endpoint, and writes to that endpoint's OnOff attribute control one physical relay GPIO.
+
+---
+
+## Implementation
+
+- Relay GPIO: GPIO22
+- Relay default boot state: off
+- Relay polarity: active-high
+- RGB LED GPIO: GPIO8
+- Matter behavior: one On/Off endpoint controls the relay GPIO
 
 ---
 
@@ -15,8 +25,8 @@ This firmware is for an ESP32 device that uses the Matter standard to control a 
 ### Software
 
 - **Ubuntu 24.04** or **24.10**
-- **ESP-IDF 5.2.3** (newer versions should be tested)
-- **ESP-Matter 1.3** (newer versions should be tested)
+- **ESP-IDF 5.3**
+- **ESP-Matter 1.4**
 
 ---
 
@@ -35,7 +45,7 @@ sudo apt-get install git wget flex bison gperf python3 python3-pip python3-venv 
 ```bash
 mkdir -p ~/esp
 cd ~/esp
-git clone -b v5.2.3 --recursive https://github.com/espressif/esp-idf.git
+git clone -b v5.3 --recursive https://github.com/espressif/esp-idf.git
 ```
 
 **Step 3. Set up the Tools:**
@@ -73,7 +83,7 @@ sudo apt-get install git gcc g++ pkg-config libssl-dev libdbus-1-dev libglib2.0-
 
 ```bash
 cd ~/esp/
-git clone -b release/v1.3 --recursive https://github.com/espressif/esp-matter.git
+git clone -b release/v1.4 --recursive https://github.com/espressif/esp-matter.git
 ```
 
 **Step 3. Bootstrap esp-matter:**
@@ -109,7 +119,7 @@ To connect the relay module to the ESP32, use the following wiring instructions:
 
 - **DC+ (Power Supply Positive):** Connect to the **3.3V pin** on the ESP32.
 - **DC- (Power Supply Negative):** Connect to the **GND pin** on the ESP32.
-- **IN (Input Signal):** Connect to the **GPIO21 pin** on the ESP32.
+- **IN (Input Signal):** Connect to the **GPIO22 pin** on the ESP32.
 
 ### Relay Switch Terminals
 
@@ -129,20 +139,16 @@ To connect the relay module to the ESP32, use the following wiring instructions:
 ### Step 1. Clone the Repository
 
 ```bash
-git clone https://github.com/<your-repo>/matter-esp32-relay.git
-cd matter-esp32-relay
+git clone https://github.com/albert-gee/matter_relay.git
+cd matter_relay
 ```
 
-### Step 2. Configure the Project (optional)
-
-Use `menuconfig` to configure project-specific settings:
+### Step 2. Set up the Environment
 
 ```bash
-idf.py menuconfig
+get_idf
+get_matter
 ```
-
-- Set the relay GPIO to GPIO21 if needed.
-- Enable or disable features like CHIP Shell or OTA based on your requirements.
 
 ### Step 3. Set ESP32 as the Target Device
 
@@ -188,4 +194,3 @@ This project is licensed under the MIT License. See the `LICENSE` file for detai
 
 - [Espressif Matter Documentation](https://docs.espressif.com/projects/esp-matter/en/latest/)
 - [Matter Protocol Specification](https://csa-iot.org/all-solutions/matter/)
-

@@ -29,19 +29,17 @@ static void rgb_task(void *pvParameter) {
         current_mode(strip);
     }
 
+    rgb_task_handle = NULL;
     vTaskDelete(NULL);
 }
 
 void set_rgb_mode(rgb_mode_fn mode) {
     if (current_mode != mode) {
-      vTaskDelay(3000 / portTICK_PERIOD_MS);
-
-        // Avoid deleting a task that already self-deleted
-        if (rgb_task_handle != NULL && eTaskGetState(rgb_task_handle) != eDeleted) {
+        if (rgb_task_handle != NULL) {
             vTaskDelete(rgb_task_handle);
+            rgb_task_handle = NULL;
         }
 
-        rgb_task_handle = NULL;
         current_mode = mode;
 
         if (current_mode == NULL) {
