@@ -5,6 +5,7 @@
 #include "matter_interface.h"
 #include "events.h"
 #include "relay.h"
+#include "rgb_led.h"
 
 static const char *TAG = "***app_main***";
 
@@ -25,6 +26,13 @@ extern "C" void app_main() {
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Relay initialization failed: %s", esp_err_to_name(err));
         return;
+    }
+
+    // Relay control is the primary function, so RGB LED init failure is logged
+    // but does not stop startup.
+    err = rgb_led_init();
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "RGB LED initialization failed: %s", esp_err_to_name(err));
     }
 
     // Initialize Matter

@@ -27,7 +27,6 @@ void matter_event_callback(const ChipDeviceEvent *event, intptr_t arg) {
         // Signals that a commissioning session has started.
         case chip::DeviceLayer::DeviceEventType::kCommissioningSessionStarted:
             ESP_LOGI(TAG, "Commissioning session started");
-            // Set the RGB LED to a cycle colors mode
             set_rgb_mode(rgb_mode_commissioning_in_progress);
             break;
 

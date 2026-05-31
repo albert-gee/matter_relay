@@ -9,7 +9,7 @@ This firmware is a Matter relay actuator. It creates one Matter On/Off endpoint,
 - Relay GPIO: GPIO22
 - Relay default boot state: off
 - Relay polarity: active-high
-- RGB LED GPIO: GPIO8
+- RGB LED GPIO: GPIO21 on ESP32, GPIO8 on targets where GPIO8 is not reserved for SPI flash
 - Matter behavior: one On/Off endpoint controls the relay GPIO
 
 ---
