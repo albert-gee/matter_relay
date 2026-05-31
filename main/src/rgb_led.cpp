@@ -29,7 +29,6 @@ static void rgb_task(void *pvParameter) {
         current_mode(strip);
     }
 
-    rgb_task_handle = NULL;
     vTaskDelete(NULL);
 }
 
