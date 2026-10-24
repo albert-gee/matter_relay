@@ -6,6 +6,7 @@
 #include <esp_err.h>
 #include <esp_matter.h>
 #include <esp_matter_console.h>
+#include <esp_matter_ota.h>
 #include <freertos/FreeRTOS.h>
 #include <portmacro.h>
 
@@ -69,6 +70,16 @@ esp_err_t matter_init(uint16_t *endpoint_id) {
     }
     ESP_LOGI(TAG, "Matter started");
 
+    // esp_matter::start() waits for the data model and cluster plugins to be
+    // initialized, including StartUpOnOff processing. Apply that resolved
+    // attribute to the physical relay now; kServerReady can be delayed until
+    // DNS-SD is available on an uncommissioned Thread device.
+    matter_err = matter_apply_relay_startup_state();
+    if (matter_err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to apply Matter startup state to relay");
+        return matter_err;
+    }
+
     // The Matter Over-The-Air is a process that allows a Matter device in a Matter fabric to update its firmware.
     // OTA Requestor is any Matter device that is going to have its firmware updated.
     // https://docs.nordicsemi.com/bundle/ncs-latest/page/nrf/protocols/matter/overview/dfu.html
@@ -93,7 +104,7 @@ esp_err_t matter_init(uint16_t *endpoint_id) {
     esp_matter::console::diagnostics_register_commands();
     esp_matter::console::wifi_register_commands();
 #if CONFIG_OPENTHREAD_CLI
-    console::otcli_register_commands();
+    esp_matter::console::otcli_register_commands();
 #endif
     esp_matter::console::init();
 #endif
@@ -143,4 +154,25 @@ esp_err_t create_on_off_endpoint(esp_matter::node_t *matter_node, uint16_t *endp
 
 uint16_t matter_get_relay_endpoint_id(void) {
     return relay_endpoint_id;
+}
+
+esp_err_t matter_apply_relay_startup_state(void) {
+    esp_matter::attribute_t *attribute = esp_matter::attribute::get(
+        relay_endpoint_id,
+        chip::app::Clusters::OnOff::Id,
+        chip::app::Clusters::OnOff::Attributes::OnOff::Id);
+    if (attribute == nullptr) {
+        ESP_LOGE(TAG, "Failed to find resolved OnOff attribute");
+        return ESP_ERR_NOT_FOUND;
+    }
+
+    esp_matter_attr_val_t value = esp_matter_invalid(nullptr);
+    esp_err_t err = esp_matter::attribute::get_val(attribute, &value);
+    if (err != ESP_OK || value.type != ESP_MATTER_VAL_TYPE_BOOLEAN) {
+        ESP_LOGE(TAG, "Failed to read resolved OnOff state: %s", esp_err_to_name(err));
+        return err == ESP_OK ? ESP_ERR_INVALID_RESPONSE : err;
+    }
+
+    ESP_LOGI(TAG, "Applying resolved Matter startup state to relay: %d", value.val.b);
+    return relay_set(value.val.b);
 }

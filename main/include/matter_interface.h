@@ -54,6 +54,9 @@ esp_err_t create_on_off_endpoint(esp_matter::node_t *matter_node, uint16_t *endp
 
 uint16_t matter_get_relay_endpoint_id(void);
 
+/** Apply Matter's resolved StartUpOnOff/restore state to the relay GPIO. */
+esp_err_t matter_apply_relay_startup_state(void);
+
 #ifdef __cplusplus
 }
 #endif

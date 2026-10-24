@@ -7,6 +7,8 @@
 #include <rgb_led.h>
 #include <rgb_led_modes.h>
 #include <platform/CHIPDeviceEvent.h>
+#include <app/server/CommissioningWindowManager.h>
+#include <app/server/Server.h>
 #include <driver/gpio.h>
 
 #include <esp_log.h>
@@ -14,6 +16,26 @@
 #include <inttypes.h>
 
 static const char *TAG = "EVENTS";
+
+static void open_commissioning_window_if_necessary() {
+    if (chip::Server::GetInstance().GetFabricTable().FabricCount() != 0) {
+        return;
+    }
+
+    chip::CommissioningWindowManager &commissioning =
+        chip::Server::GetInstance().GetCommissioningWindowManager();
+    if (commissioning.IsCommissioningWindowOpen()) {
+        return;
+    }
+
+    CHIP_ERROR err = commissioning.OpenBasicCommissioningWindow(
+        chip::System::Clock::Seconds16(300),
+        chip::CommissioningWindowAdvertisement::kDnssdOnly);
+    if (err != CHIP_NO_ERROR) {
+        ESP_LOGE(TAG, "Failed to reopen commissioning window: 0x%08" PRIx32,
+                 err.AsInteger());
+    }
+}
 
 void matter_event_callback(const ChipDeviceEvent *event, intptr_t arg) {
     switch (event->Type) {
@@ -157,6 +179,10 @@ void matter_event_callback(const ChipDeviceEvent *event, intptr_t arg) {
             ESP_LOGI(TAG, "OTA state changed");
             break;
 
+        case chip::DeviceLayer::DeviceEventType::kServerReady:
+            ESP_LOGI(TAG, "Matter server ready");
+            break;
+
         // Indicates that a fabric is about to be removed.
         case chip::DeviceLayer::DeviceEventType::kFabricWillBeRemoved:
             ESP_LOGI(TAG, "Fabric will be removed");
@@ -165,6 +191,7 @@ void matter_event_callback(const ChipDeviceEvent *event, intptr_t arg) {
         // Indicates that a fabric has been removed.
         case chip::DeviceLayer::DeviceEventType::kFabricRemoved:
             ESP_LOGI(TAG, "Fabric removed successfully");
+            open_commissioning_window_if_necessary();
             break;
 
         // Indicates that a fabric in the Fabric Table has been committed to storage.
