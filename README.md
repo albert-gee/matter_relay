@@ -18,15 +18,15 @@ This firmware is a Matter relay actuator. It creates one Matter On/Off endpoint,
 
 ### Hardware
 
-- ESP32-DevKitM-1 or another board
-- 5V 1-Channel Relay Module or another module
+- ESP32-H2-DevKitM-1
+- DFRobot Gravity Digital 16A Relay Module, SKU DFR0251
 - Power Supply and wires
 
 ### Software
 
 - **Ubuntu 24.04** or **24.10**
-- **ESP-IDF 5.3**
-- **ESP-Matter 1.4**
+- **ESP-IDF 5.3.2**
+- **ESP-Matter release/v1.4.2** (`4cedd4ad40821933d6cc237e80ab6604f2953fb0`)
 
 ---
 
@@ -45,7 +45,7 @@ sudo apt-get install git wget flex bison gperf python3 python3-pip python3-venv 
 ```bash
 mkdir -p ~/esp
 cd ~/esp
-git clone -b v5.3 --recursive https://github.com/espressif/esp-idf.git
+git clone -b v5.3.2 --recursive https://github.com/espressif/esp-idf.git
 ```
 
 **Step 3. Set up the Tools:**
@@ -83,7 +83,7 @@ sudo apt-get install git gcc g++ pkg-config libssl-dev libdbus-1-dev libglib2.0-
 
 ```bash
 cd ~/esp/
-git clone -b release/v1.4 --recursive https://github.com/espressif/esp-matter.git
+git clone -b release/v1.4.2 --recursive https://github.com/espressif/esp-matter.git
 ```
 
 **Step 3. Bootstrap esp-matter:**
@@ -113,17 +113,19 @@ Running `get_matter` will now set up or refresh the esp-matter environment in an
 
 ## Wiring
 
-To connect the relay module to the ESP32, use the following wiring instructions:
+The supported reference hardware is the **DFRobot Gravity Digital 16A Relay Module (SKU DFR0251)**. It is active-high, accepts a 3.3 V control signal, and accepts a 3.3–5.5 V module supply. These instructions use the ESP32-H2-DevKitM-1 5 V rail for the module/coil supply while GPIO22 supplies only the 3.3 V logic signal.
 
 ### Relay Module Pinout
 
-- **DC+ (Power Supply Positive):** Connect to the **3.3V pin** on the ESP32.
-- **DC- (Power Supply Negative):** Connect to the **GND pin** on the ESP32.
-- **IN (Input Signal):** Connect to the **GPIO22 pin** on the ESP32.
+- **+ (Module/coil supply):** Connect to the **5V pin** on the ESP32-H2-DevKitM-1.
+- **− (Module ground):** Connect to **GND** on the ESP32-H2-DevKitM-1.
+- **D (3.3 V logic input):** Connect to **GPIO22**. Do not connect 5 V to the GPIO.
+
+Do not substitute an arbitrary 5 V relay board. A substitute must explicitly accept a 3.3 V active-high input and must not pull the ESP32-H2 GPIO above 3.3 V. Power its relay coil/module from the voltage specified by that module, not from the ESP32-H2 3.3 V pin.
 
 ### Relay Switch Terminals
 
-- **COM (Common Terminal):** Connect to the positive terminal of the power supply (red wire from the power source). This is the common connection that feeds power into the relay.
+- **COM (Common Terminal):** Connect to the positive terminal of the separate load power supply. This supply is electrically distinct from the module's 5 V coil supply unless the load itself is 5 V and the supply is adequately rated.
 - **NO (Normally Open):** Connect to the red wire of the fan (positive wire). When the relay is activated, it closes the circuit, sending power to the fan.
 - **NC (Normally Closed):** Leave this unconnected.
 
@@ -132,6 +134,8 @@ To connect the relay module to the ESP32, use the following wiring instructions:
 - **Black Wire (Negative):** Connect directly to the negative terminal of the power supply (black wire).
 - **Red Wire (Positive):** Connect to the NO terminal on the relay.
 
+Use a low-voltage DC load for development. Switching mains voltage requires an appropriately enclosed, fused, code-compliant installation by a qualified person.
+
 ---
 
 ## Build and Flash
@@ -139,7 +143,7 @@ To connect the relay module to the ESP32, use the following wiring instructions:
 ### Step 1. Clone the Repository
 
 ```bash
-git clone https://github.com/albert-gee/matter_relay.git
+git clone git@github.com:albert-gee/matter_relay.git
 cd matter_relay
 ```
 
@@ -150,12 +154,12 @@ get_idf
 get_matter
 ```
 
-### Step 3. Set ESP32 as the Target Device
+### Step 3. Set ESP32-H2 as the Target Device
 
 This command creates a new `sdkconfig` file in the root directory of the project:
 
 ```bash
-idf.py set-target esp32
+idf.py set-target esp32h2
 ```
 
 ### Step 4. Build the Project
@@ -193,4 +197,5 @@ This project is licensed under the MIT License. See the `LICENSE` file for detai
 ## References
 
 - [Espressif Matter Documentation](https://docs.espressif.com/projects/esp-matter/en/latest/)
+- [DFRobot DFR0251 Relay Module Documentation](https://wiki.dfrobot.com/dfr0251)
 - [Matter Protocol Specification](https://csa-iot.org/all-solutions/matter/)

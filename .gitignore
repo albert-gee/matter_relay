@@ -5,3 +5,4 @@
 .idea/
 sdkconfig
 sdkconfig.old
+esp_image_encryption_key.pem
